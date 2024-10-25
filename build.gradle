@@ -1,0 +1,66 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+plugins {
+    id 'java'
+    id 'application'
+    id 'jacoco'
+}
+
+run {
+    standardInput = System.in
+    standardOutput = System.out
+}
+
+repositories {
+    // Use mavenCentral instead of jcenter
+    mavenCentral()
+}
+
+jacoco {
+    toolVersion = "0.8.4"
+}
+
+jacocoTestReport {
+    reports {
+        xml.required.set(true)
+        csv.required.set(true)
+        html.required.set(true)
+        html.outputLocation.set(file("${buildDir}/jacocoHtml"))
+    }
+}
+
+test {
+    reports {
+        html.required.set(true)
+        junitXml.required.set(true)
+    }
+    testLogging {
+        events = [TestLogEvent.FAILED, TestLogEvent.PASSED]
+        exceptionFormat = TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+
+        afterSuite { description, result ->
+            if (!description.parent) {
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures)"
+                def start = '|  ', end = '  |'
+                def repeat = start.length() + output.length() + end.length()
+                println('\n' + ('-' * repeat) + '\n' + start + output + end + '\n' + ('-' * repeat))
+            }
+        }
+    }
+    finalizedBy jacocoTestReport
+}
+
+dependencies {
+    implementation 'com.google.guava:guava:27.0.1-jre'
+    implementation 'org.processing:core:3.3.7'
+    testImplementation 'junit:junit:4.12'
+}
+
+// Define the main class for the application
+application {
+    mainClass = 'invadem.App'
+}
